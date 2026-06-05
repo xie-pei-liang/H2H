@@ -916,6 +916,10 @@
     (function () {
       const STORAGE_KEY = "badminton-h2h-state-v2";
       const SYNC_KEY = "badminton-h2h-sync-v1";
+      const DEFAULT_SYNC_CONFIG = {
+        url: "https://h2h-badminton-default-rtdb.asia-southeast1.firebasedatabase.app",
+        room: "H2H"
+      };
 
       function createDefaultState() {
         return {
@@ -1050,11 +1054,11 @@
         try {
           const config = JSON.parse(localStorage.getItem(SYNC_KEY) || "{}");
           return {
-            url: String(config.url || ""),
-            room: String(config.room || "default")
+            url: String(config.url || DEFAULT_SYNC_CONFIG.url),
+            room: String(config.room || DEFAULT_SYNC_CONFIG.room)
           };
         } catch {
-          return { url: "", room: "default" };
+          return { ...DEFAULT_SYNC_CONFIG };
         }
       }
 
