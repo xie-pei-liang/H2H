@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>球员交手记录 羽毛球H2H</title>
+  <style>
+    :root {
+      --page-bg: #e8edf2;
+      --blue: #1e6a9f;
+      --blue-dark: #15547f;
+      --blue-soft: #e9f3fb;
+      --line: #cbd8e3;
+      --line-dark: #9fb5c8;
+      --text: #263746;
+      --muted: #6b7f90;
+      --red: #d71920;
+      --orange: #f08824;
+      --white: #fff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+      font-size: 14px;
+    }
+
+    button, input, select { font: inherit; }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #f2f2f2;
+      color: #0a0a0a;
+    }
+
+    .topbar-inner {
+      width: min(1000px, calc(100% - 20px));
+      min-height: 76px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .brand {
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .back-mark {
+      position: absolute;
+      left: max(18px, calc((100vw - 1000px) / 2 + 8px));
+      width: 34px;
+      height: 34px;
+      border-left: 7px solid #111;
+      border-bottom: 7px solid #111;
+      transform: rotate(45deg);
+    }
+
+    .top-links {
+      display: flex;
+      gap: 2px;
+      flex-wrap: wrap;
+    }
+
+    .top-links span {
+      padding: 8px 10px;
+      border-left: 1px solid rgba(255,255,255,.22);
+      color: #eaf6ff;
+      font-size: 13px;
+    }
+
+    .page {
+      width: min(1000px, 100%);
+      margin: 0 auto 28px;
+      background: #fff;
+      border: 0;
+    }
+
+    .crumb {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .page-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 2px solid var(--blue);
+    }
+
+    .page-title h1 {
+      margin: 0;
+      color: #154a70;
+      font-size: 22px;
+    }
+
+    .page-title .sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .display-zone {
+      background: #0b1736;
+      padding: 22px clamp(12px, 3vw, 28px) 26px;
+    }
+
+    .display-label,
+    .operation-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 0 14px;
+      font-weight: 700;
+    }
+
+    .display-label {
+      color: #fff;
+    }
+
+    .operation-label {
+      color: #173a66;
+    }
+
+    .display-label span,
+    .operation-label span {
+      font-size: 12px;
+      opacity: .78;
+      font-weight: 400;
+    }
+
+    .edit-link {
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      color: #fff;
+      cursor: pointer;
+      padding: 8px 15px;
+      text-decoration: none;
+    }
+
+    .h2h-card {
+      margin: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    .olympic-showcase {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(20px, 4vw, 38px);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 0;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(0,133,199,.32), transparent 24%),
+        radial-gradient(circle at 82% 18%, rgba(244,195,0,.26), transparent 23%),
+        linear-gradient(135deg, #09142f 0%, #102f66 48%, #0a1634 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+      color: #fff;
+    }
+
+    .rings {
+      position: absolute;
+      inset: 22px auto auto 26px;
+      display: flex;
+      gap: 7px;
+      opacity: .92;
+    }
+
+    .rings span {
+      width: 30px;
+      height: 30px;
+      border: 4px solid #fff;
+      border-radius: 50%;
+    }
+
+    .rings span:nth-child(1) { border-color: #0085c7; }
+    .rings span:nth-child(2) { border-color: #f4c300; transform: translateY(15px); }
+    .rings span:nth-child(3) { border-color: #000; background: rgba(255,255,255,.55); }
+    .rings span:nth-child(4) { border-color: #009f3d; transform: translateY(15px); }
+    .rings span:nth-child(5) { border-color: #df0024; }
+
+    .showcase-heading {
+      display: flex;
+      justify-content: flex-end;
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      letter-spacing: 0;
+    }
+
+    .medal-score {
+      display: grid;
+      grid-template-columns: 1fr 124px 1fr;
+      align-items: center;
+      gap: clamp(10px, 3vw, 28px);
+      margin: 54px 0 28px;
+    }
+
+    .result-number {
+      display: grid;
+      place-items: center;
+      width: clamp(132px, 22vw, 220px);
+      height: clamp(132px, 22vw, 220px);
+      margin: 0 auto;
+      border: 7px solid rgba(255,255,255,.92);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 24%, rgba(255,255,255,.35), transparent 22%),
+        linear-gradient(145deg, #f8d977, #c99318 56%, #fff0ad);
+      color: #18284d;
+      font-size: clamp(70px, 13vw, 132px);
+      font-weight: 900;
+      line-height: 1;
+      text-align: center;
+      box-shadow: 0 18px 34px rgba(0,0,0,.34);
+    }
+
+    .score-orb {
+      display: grid;
+      place-items: center;
+      width: 118px;
+      height: 118px;
+      margin: 0 auto;
+      border: 2px solid rgba(255,255,255,.45);
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+      color: #fff;
+      font-size: 38px;
+      font-weight: 900;
+      box-shadow: 0 12px 30px rgba(0,0,0,.24);
+    }
+
+    .athlete-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .athlete-card {
+      display: grid;
+      grid-template-columns: 118px minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+      min-height: 156px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.24);
+      background: rgba(255,255,255,.94);
+      color: #10203d;
+      box-shadow: 0 14px 24px rgba(0,0,0,.18);
+    }
+
+    .athlete-card.right {
+      grid-template-columns: minmax(0, 1fr) 118px;
+      text-align: right;
+    }
+
+    .slot-avatar {
+      width: 112px;
+      height: 112px;
+      overflow: hidden;
+      border: 4px solid #fff;
+      border-radius: 50%;
+      background: #eef2f6;
+      display: grid;
+      place-items: center;
+      color: #b6c0c9;
+      font-size: 40px;
+      font-weight: 800;
+      box-shadow: 0 0 0 1px #d6dde5;
+    }
+
+    .slot-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .athlete-name {
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .athlete-meta {
+      margin-top: 8px;
+      color: #536477;
+      font-size: 14px;
+    }
+
+    .win-pill {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f4c300;
+      color: #17213a;
+      font-weight: 800;
+    }
+
+    .showcase-records {
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.94);
+      color: #14243d;
+    }
+
+    .showcase-records .section-heading {
+      background: #fff;
+      border-bottom: 1px solid #d8e1ea;
+    }
+
+    .operation-zone {
+      display: none;
+      margin: 18px 12px 0;
+      padding: 14px;
+      border: 2px solid #d8e3ec;
+      background: #f6f9fb;
+    }
+
+    .operation-zone.is-open {
+      display: block;
+    }
+
+    .operation-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .module-title {
+      padding: 8px 10px;
+      background: linear-gradient(#f9fcff, var(--blue-soft));
+      border-bottom: 1px solid var(--line-dark);
+      color: #164d74;
+      font-weight: 700;
+    }
+
+    .versus-board {
+      display: grid;
+      grid-template-columns: 1fr 240px 1fr;
+      align-items: stretch;
+      min-height: 210px;
+    }
+
+    .player-box {
+      display: grid;
+      grid-template-columns: 130px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      padding: 18px;
+    }
+
+    .player-box.right {
+      grid-template-columns: minmax(0, 1fr) 130px;
+      text-align: right;
+    }
+
+    .portrait {
+      width: 120px;
+      height: 150px;
+      overflow: hidden;
+      border: 1px solid #9eb4c8;
+      background: linear-gradient(#f7f7f7, #d6e0e9);
+      display: grid;
+      place-items: center;
+      color: #6c7f90;
+      font-size: 48px;
+      font-weight: 700;
+    }
+
+    .portrait img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .player-info h2 {
+      margin: 0 0 8px;
+      color: #194d72;
+      font-size: 26px;
+      line-height: 1.2;
+    }
+
+    .player-info p {
+      margin: 0 0 8px;
+      color: var(--muted);
+    }
+
+    .win-label {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #fff4e6;
+      border: 1px solid #f0c58e;
+      color: #9b4b00;
+      font-size: 13px;
+    }
+
+    .score-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+      background: #fbfdff;
+      text-align: center;
+    }
+
+    .score-center .caption {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .result-line {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .score-center .result-number {
+      min-width: 58px;
+      color: var(--red);
+      font-size: 58px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .vs-text {
+      color: #334b62;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .total {
+      margin-top: 10px;
+      color: #52697c;
+    }
+
+    .section {
+      margin: 12px;
+      border: 1px solid var(--line-dark);
+      background: #fff;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      background: #f2f7fb;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      color: #174f77;
+      font-size: 16px;
+    }
+
+    .section-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 850px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 8px 7px;
+      border-right: 1px solid #dde6ee;
+      border-bottom: 1px solid #dde6ee;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #e6f0f8;
+      color: #244c6a;
+      font-weight: 700;
+    }
+
+    tbody tr:nth-child(even) { background: #fafcfe; }
+    tbody tr:hover { background: #fff8e9; }
+
+    .event-cell { text-align: left; }
+
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+      margin: 12px;
+    }
+
+    .sync-panel {
+      grid-column: 1 / -1;
+    }
+
+    .sync-status {
+      margin: 10px 0 0;
+      color: #536477;
+      font-size: 13px;
+    }
+
+    .sync-status.ok {
+      color: #146c43;
+    }
+
+    .sync-status.error {
+      color: #b5201c;
+    }
+
+    .form-body {
+      padding: 12px;
+    }
+
+    .fieldsets {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    fieldset {
+      margin: 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      background: #fcfdff;
+    }
+
+    legend {
+      padding: 0 5px;
+      color: #174f77;
+      font-weight: 700;
+    }
+
+    label {
+      display: block;
+      margin: 9px 0 4px;
+      color: #40586c;
+      font-size: 13px;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 32px;
+      padding: 6px 8px;
+      border: 1px solid #b8c8d6;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input[type="file"] { padding: 5px; }
+
+    .match-grid {
+      display: grid;
+      grid-template-columns: 70px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .match-grid label { margin: 0; }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      border: 1px solid #0d4f79;
+      background: linear-gradient(#2b80b5, #15547f);
+      color: #fff;
+      cursor: pointer;
+      min-height: 32px;
+      padding: 6px 14px;
+      font-weight: 700;
+    }
+
+    .btn.secondary {
+      border-color: #bdc9d3;
+      background: linear-gradient(#fff, #edf3f8);
+      color: #25506f;
+    }
+
+    .link-button {
+      border: 1px solid #e1b5b1;
+      background: #fff1f0;
+      color: #b5201c;
+      cursor: pointer;
+      padding: 3px 7px;
+    }
+
+    .footer-note {
+      margin: 0 12px 14px;
+      padding: 8px 10px;
+      background: #fffdf3;
+      border: 1px solid #ead8a7;
+      color: #80622b;
+      font-size: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .topbar-inner, .page-title, .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .versus-board, .editor-grid, .fieldsets {
+        grid-template-columns: 1fr;
+      }
+
+      .display-zone {
+        padding: 14px 10px 18px;
+      }
+
+      .olympic-showcase {
+        padding: 18px 12px;
+      }
+
+      .rings {
+        position: static;
+        margin-bottom: 16px;
+      }
+
+      .rings span {
+        width: 22px;
+        height: 22px;
+        border-width: 3px;
+      }
+
+      .showcase-heading {
+        justify-content: flex-start;
+      }
+
+      .medal-score {
+        grid-template-columns: 1fr 70px 1fr;
+        margin: 20px 0;
+      }
+
+      .score-orb {
+        width: 68px;
+        height: 68px;
+        font-size: 24px;
+      }
+
+      .athlete-row {
+        grid-template-columns: 1fr;
+      }
+
+      .athlete-card,
+      .athlete-card.right {
+        grid-template-columns: 92px minmax(0, 1fr);
+        text-align: left;
+        min-height: 124px;
+        padding: 14px;
+      }
+
+      .athlete-card.right .slot-avatar {
+        order: 0;
+      }
+
+      .athlete-card.right > div:first-child {
+        order: 1;
+      }
+
+      .slot-avatar {
+        width: 86px;
+        height: 86px;
+      }
+
+      .score-center {
+        min-height: 130px;
+        border: 1px solid var(--line);
+        border-right: 0;
+        border-left: 0;
+      }
+
+      .player-box,
+      .player-box.right {
+        grid-template-columns: 100px minmax(0, 1fr);
+        text-align: left;
+      }
+
+      .player-box.right .portrait { order: 0; }
+      .player-box.right .player-info { order: 1; }
+
+      .portrait {
+        width: 92px;
+        height: 116px;
+      }
+
+      .result-number {
+        font-size: 48px;
+      }
+
+      .medal-score .result-number {
+        width: 92px;
+        height: 92px;
+        font-size: 56px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="back-mark" aria-hidden="true"></div>
+    <div class="topbar-inner">
+      <div class="brand">交手记录H2H</div>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="crumb">当前位置：首页 &gt; 球员资料 &gt; 交手记录</div>
+
+    <div class="page-title">
+      <div>
+        <h1>球员交手记录</h1>
+        <div class="sub">可自行添加球员、修改头像、胜负次数和比赛明细</div>
+      </div>
+    </div>
+
+    <section class="display-zone">
+      <div class="display-label">
+        <strong>展示区域</strong>
+        <button class="edit-link" type="button" data-open-editor>编辑数据</button>
+      </div>
+
+      <section class="h2h-card" aria-label="交手总览">
+        <div class="olympic-showcase">
+          <div class="rings" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="showcase-heading">OLYMPIC STYLE / HEAD TO HEAD</div>
+
+          <div class="medal-score">
+            <span class="result-number" data-left-wins></span>
+            <span class="score-orb">VS</span>
+            <span class="result-number" data-right-wins></span>
+          </div>
+
+          <div class="athlete-row">
+            <article class="athlete-card">
+              <div class="slot-avatar" data-left-avatar></div>
+              <div>
+                <div class="athlete-name" data-left-name></div>
+                <div class="athlete-meta" data-left-country></div>
+                <span class="win-pill">胜场 <b data-left-wins-label></b></span>
+              </div>
+            </article>
+
+            <article class="athlete-card right">
+              <div>
+                <div class="athlete-name" data-right-name></div>
+                <div class="athlete-meta" data-right-country></div>
+                <span class="win-pill">胜场 <b data-right-wins-label></b></span>
+              </div>
+              <div class="slot-avatar" data-right-avatar></div>
+            </article>
+          </div>
+
+          <section class="showcase-records">
+            <div class="section-heading">
+              <h2>比赛记录</h2>
+              <p data-total-matches></p>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>序号</th>
+                    <th>日期</th>
+                    <th>赛事</th>
+                    <th>轮次</th>
+                    <th>胜者</th>
+                    <th>比分</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody data-match-body></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </section>
+
+    <section class="operation-zone" id="operation-zone">
+      <div class="operation-actions">
+        <button class="btn secondary" type="button" data-close-editor>收起操作区</button>
+      </div>
+      <div class="operation-label">
+        <strong>操作区域</strong>
+        <span>这里嵌入在同一个网页内，只在需要编辑时打开。</span>
+      </div>
+
+      <div class="editor-grid">
+      <section class="section sync-panel">
+        <div class="section-heading">
+          <h2>云同步设置</h2>
+          <p>多台电脑填写同一个同步地址和房间名后共享数据。</p>
+        </div>
+        <div class="form-body">
+          <label for="sync-url">同步地址</label>
+          <input id="sync-url" type="text" placeholder="例如：https://你的项目.firebaseio.com">
+          <label for="sync-room">房间名</label>
+          <input id="sync-room" type="text" placeholder="例如：my-h2h-room">
+          <div class="button-row">
+            <button class="btn" type="button" data-sync-connect>保存同步设置</button>
+            <button class="btn secondary" type="button" data-sync-pull>从云端拉取</button>
+          </div>
+          <p class="sync-status" data-sync-status>未启用云同步，当前只保存在本机浏览器。</p>
+        </div>
+      </section>
+
+      <form class="section" data-editor-form>
+        <div class="section-heading">
+          <h2>编辑球员与总比分</h2>
+          <p>头像可填图片链接，或选择本地图片。</p>
+        </div>
+        <div class="form-body">
+          <div class="fieldsets">
+            <fieldset>
+              <legend>左侧球员</legend>
+              <label for="left-name">姓名</label>
+              <input id="left-name" type="text">
+              <label for="left-country">国家/地区</label>
+              <input id="left-country" type="text">
+              <label for="left-avatar">头像链接</label>
+              <input id="left-avatar" type="text" placeholder="https://...">
+              <label for="left-file">本地头像</label>
+              <input id="left-file" type="file" accept="image/*" data-avatar-file="#left-avatar">
+            </fieldset>
+
+            <fieldset>
+              <legend>右侧球员</legend>
+              <label for="right-name">姓名</label>
+              <input id="right-name" type="text">
+              <label for="right-country">国家/地区</label>
+              <input id="right-country" type="text">
+              <label for="right-avatar">头像链接</label>
+              <input id="right-avatar" type="text" placeholder="https://...">
+              <label for="right-file">本地头像</label>
+              <input id="right-file" type="file" accept="image/*" data-avatar-file="#right-avatar">
+            </fieldset>
+
+            <fieldset>
+              <legend>胜负次数</legend>
+              <label for="left-wins">左侧胜场</label>
+              <input id="left-wins" type="number" min="0">
+              <label for="right-wins">右侧胜场</label>
+              <input id="right-wins" type="number" min="0">
+            </fieldset>
+          </div>
+          <div class="button-row">
+            <button class="btn" type="submit">保存球员信息</button>
+          </div>
+        </div>
+      </form>
+
+      <form class="section" data-match-form>
+        <div class="section-heading">
+          <h2>添加比赛记录</h2>
+          <p>填写后点添加比赛。</p>
+        </div>
+        <div class="form-body">
+          <div class="match-grid">
+            <label for="match-date">日期</label>
+            <input id="match-date" type="text" placeholder="2026-06-05">
+            <label for="match-event">赛事</label>
+            <input id="match-event" type="text" placeholder="公开赛">
+            <label for="match-round">轮次</label>
+            <input id="match-round" type="text" placeholder="决赛">
+            <label for="winner">胜者</label>
+            <select id="winner"></select>
+            <label for="match-score">比分</label>
+            <input id="match-score" type="text" placeholder="21-18 21-19">
+            <label for="match-note">备注</label>
+            <input id="match-note" type="text" placeholder="可留空">
+          </div>
+          <div class="button-row">
+            <button class="btn" type="submit">添加比赛</button>
+          </div>
+        </div>
+      </form>
+      </div>
+    </section>
+
+    <p class="footer-note">这是单文件网页：把这个 index.html 发送给别人，对方双击即可打开；数据保存在对方电脑的浏览器里。</p>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "badminton-h2h-state-v2";
+      const SYNC_KEY = "badminton-h2h-sync-v1";
+
+      function createDefaultState() {
+        return {
+          players: {
+            left: { name: "石宇奇", country: "中国", avatar: "" },
+            right: { name: "周天成", country: "中国台北", avatar: "" }
+          },
+          scores: { leftWins: 11, rightWins: 7 },
+          matches: [
+            { id: "sample-1", date: "2025-12-14", event: "世界巡回赛总决赛", round: "半决赛", winner: "left", score: "21-17 21-18", note: "两局取胜" },
+            { id: "sample-2", date: "2024-09-22", event: "中国公开赛", round: "决赛", winner: "right", score: "18-21 21-19 21-16", note: "三局逆转" },
+            { id: "sample-3", date: "2023-05-28", event: "苏迪曼杯", round: "小组赛", winner: "left", score: "21-13 21-15", note: "" }
+          ]
+        };
+      }
+
+      function toText(value, fallback) {
+        const text = String(value ?? "").trim();
+        return text || fallback;
+      }
+
+      function toWins(value) {
+        const number = Number.parseInt(value, 10);
+        return Number.isFinite(number) && number > 0 ? number : 0;
+      }
+
+      function normalizeWinner(value) {
+        return value === "right" ? "right" : "left";
+      }
+
+      function sanitizeState(input) {
+        const fallback = createDefaultState();
+        const source = input && typeof input === "object" ? input : fallback;
+        const players = source.players || {};
+        const left = players.left || {};
+        const right = players.right || {};
+        const scores = source.scores || {};
+        const matches = Array.isArray(source.matches) ? source.matches : fallback.matches;
+        return {
+          players: {
+            left: {
+              name: toText(left.name, fallback.players.left.name),
+              country: toText(left.country, fallback.players.left.country),
+              avatar: String(left.avatar || "")
+            },
+            right: {
+              name: toText(right.name, fallback.players.right.name),
+              country: toText(right.country, fallback.players.right.country),
+              avatar: String(right.avatar || "")
+            }
+          },
+          scores: {
+            leftWins: toWins(scores.leftWins),
+            rightWins: toWins(scores.rightWins)
+          },
+          matches: matches.map((match, index) => ({
+            id: toText(match.id, `match-${Date.now()}-${index}`),
+            date: String(match.date || ""),
+            event: toText(match.event, "未命名赛事"),
+            round: String(match.round || ""),
+            winner: normalizeWinner(match.winner),
+            score: String(match.score || ""),
+            note: String(match.note || "")
+          }))
+        };
+      }
+
+      function updatePlayer(state, side, patch) {
+        const safeSide = side === "right" ? "right" : "left";
+        const next = sanitizeState(state);
+        next.players[safeSide] = {
+          ...next.players[safeSide],
+          name: toText(patch.name, next.players[safeSide].name),
+          country: toText(patch.country, next.players[safeSide].country),
+          avatar: String(patch.avatar ?? next.players[safeSide].avatar)
+        };
+        return next;
+      }
+
+      function updateScores(state, patch) {
+        const next = sanitizeState(state);
+        next.scores = {
+          leftWins: toWins(patch.leftWins),
+          rightWins: toWins(patch.rightWins)
+        };
+        return next;
+      }
+
+      function addMatch(state, match) {
+        const next = sanitizeState(state);
+        const newMatch = {
+          id: `match-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          date: String(match.date || ""),
+          event: toText(match.event, "未命名赛事"),
+          round: String(match.round || ""),
+          winner: normalizeWinner(match.winner),
+          score: String(match.score || ""),
+          note: String(match.note || "")
+        };
+        next.matches = [newMatch, ...next.matches];
+        return next;
+      }
+
+      function deleteMatch(state, id) {
+        const next = sanitizeState(state);
+        next.matches = next.matches.filter((match) => match.id !== id);
+        return next;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function serializeState(state) {
+        return JSON.stringify(sanitizeState(state));
+      }
+
+      function deserializeState(value) {
+        try {
+          return sanitizeState(JSON.parse(value));
+        } catch {
+          return createDefaultState();
+        }
+      }
+
+      function loadSyncConfig() {
+        try {
+          const config = JSON.parse(localStorage.getItem(SYNC_KEY) || "{}");
+          return {
+            url: String(config.url || ""),
+            room: String(config.room || "default")
+          };
+        } catch {
+          return { url: "", room: "default" };
+        }
+      }
+
+      function saveSyncConfig(config) {
+        localStorage.setItem(SYNC_KEY, JSON.stringify(config));
+      }
+
+      function buildSyncEndpoint(config) {
+        const base = String(config.url || "").trim().replace(/\/+$/, "");
+        const room = encodeURIComponent(String(config.room || "default").trim() || "default");
+        if (!base) return "";
+        return `${base}/${room}.json`;
+      }
+
+      function avatarMarkup(player, label) {
+        if (player.avatar) {
+          return `<img src="${escapeHtml(player.avatar)}" alt="${escapeHtml(player.name)}头像">`;
+        }
+        return `<span>${label}</span>`;
+      }
+
+      let state = deserializeState(localStorage.getItem(STORAGE_KEY));
+      let syncConfig = loadSyncConfig();
+      const doc = document;
+      const elements = {
+        leftName: doc.querySelector("[data-left-name]"),
+        leftCountry: doc.querySelector("[data-left-country]"),
+        leftAvatar: doc.querySelector("[data-left-avatar]"),
+        leftWins: doc.querySelector("[data-left-wins]"),
+        leftWinsLabel: doc.querySelector("[data-left-wins-label]"),
+        rightName: doc.querySelector("[data-right-name]"),
+        rightCountry: doc.querySelector("[data-right-country]"),
+        rightAvatar: doc.querySelector("[data-right-avatar]"),
+        rightWins: doc.querySelector("[data-right-wins]"),
+        rightWinsLabel: doc.querySelector("[data-right-wins-label]"),
+        totalMatches: doc.querySelector("[data-total-matches]"),
+        tableBody: doc.querySelector("[data-match-body]"),
+        editorForm: doc.querySelector("[data-editor-form]"),
+        matchForm: doc.querySelector("[data-match-form]"),
+        operationZone: doc.querySelector(".operation-zone"),
+        openEditor: doc.querySelector("[data-open-editor]"),
+        closeEditor: doc.querySelector("[data-close-editor]"),
+        syncUrl: doc.querySelector("#sync-url"),
+        syncRoom: doc.querySelector("#sync-room"),
+        syncConnect: doc.querySelector("[data-sync-connect]"),
+        syncPull: doc.querySelector("[data-sync-pull]"),
+        syncStatus: doc.querySelector("[data-sync-status]")
+      };
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, serializeState(state));
+        pushCloudState();
+      }
+
+      function setSyncStatus(message, type) {
+        elements.syncStatus.textContent = message;
+        elements.syncStatus.classList.remove("ok", "error");
+        if (type) elements.syncStatus.classList.add(type);
+      }
+
+      async function pushCloudState() {
+        const endpoint = buildSyncEndpoint(syncConfig);
+        if (!endpoint) return;
+        try {
+          const response = await fetch(endpoint, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: serializeState(state)
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          setSyncStatus("已同步到云端。", "ok");
+        } catch (error) {
+          setSyncStatus(`云端保存失败：${error.message}`, "error");
+        }
+      }
+
+      async function pullCloudState() {
+        const endpoint = buildSyncEndpoint(syncConfig);
+        if (!endpoint) {
+          setSyncStatus("请先填写同步地址。", "error");
+          return;
+        }
+        try {
+          const response = await fetch(endpoint, { method: "GET" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const remoteState = await response.json();
+          if (remoteState) {
+            state = sanitizeState(remoteState);
+            localStorage.setItem(STORAGE_KEY, serializeState(state));
+            render();
+            setSyncStatus("已从云端拉取最新数据。", "ok");
+          } else {
+            await pushCloudState();
+            setSyncStatus("云端为空，已上传当前数据。", "ok");
+          }
+        } catch (error) {
+          setSyncStatus(`云端拉取失败：${error.message}`, "error");
+        }
+      }
+
+      function syncEditor() {
+        doc.querySelector("#left-name").value = state.players.left.name;
+        doc.querySelector("#left-country").value = state.players.left.country;
+        doc.querySelector("#left-avatar").value = state.players.left.avatar;
+        doc.querySelector("#right-name").value = state.players.right.name;
+        doc.querySelector("#right-country").value = state.players.right.country;
+        doc.querySelector("#right-avatar").value = state.players.right.avatar;
+        doc.querySelector("#left-wins").value = state.scores.leftWins;
+        doc.querySelector("#right-wins").value = state.scores.rightWins;
+        elements.syncUrl.value = syncConfig.url;
+        elements.syncRoom.value = syncConfig.room;
+        doc.querySelector("#winner").innerHTML = `
+          <option value="left">${escapeHtml(state.players.left.name)}</option>
+          <option value="right">${escapeHtml(state.players.right.name)}</option>
+        `;
+      }
+
+      function renderMatchRow(match, index) {
+        const winnerName = state.players[match.winner].name;
+        return `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(match.date)}</td>
+            <td class="event-cell">${escapeHtml(match.event)}</td>
+            <td>${escapeHtml(match.round)}</td>
+            <td><strong>${escapeHtml(winnerName)}</strong></td>
+            <td>${escapeHtml(match.score)}</td>
+            <td>${escapeHtml(match.note)}</td>
+            <td><button class="link-button" type="button" data-delete-match="${escapeHtml(match.id)}">删除</button></td>
+          </tr>
+        `;
+      }
+
+      function render() {
+        const left = state.players.left;
+        const right = state.players.right;
+        elements.leftName.textContent = left.name;
+        elements.leftCountry.textContent = left.country;
+        elements.leftAvatar.innerHTML = avatarMarkup(left, "A");
+        elements.rightName.textContent = right.name;
+        elements.rightCountry.textContent = right.country;
+        elements.rightAvatar.innerHTML = avatarMarkup(right, "B");
+        elements.leftWins.textContent = state.scores.leftWins;
+        elements.rightWins.textContent = state.scores.rightWins;
+        elements.leftWinsLabel.textContent = state.scores.leftWins;
+        elements.rightWinsLabel.textContent = state.scores.rightWins;
+        elements.totalMatches.textContent = `共 ${state.matches.length} 场交手`;
+        elements.tableBody.innerHTML = state.matches.map(renderMatchRow).join("");
+        syncEditor();
+      }
+
+      elements.editorForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        state = updatePlayer(state, "left", {
+          name: doc.querySelector("#left-name").value,
+          country: doc.querySelector("#left-country").value,
+          avatar: doc.querySelector("#left-avatar").value
+        });
+        state = updatePlayer(state, "right", {
+          name: doc.querySelector("#right-name").value,
+          country: doc.querySelector("#right-country").value,
+          avatar: doc.querySelector("#right-avatar").value
+        });
+        state = updateScores(state, {
+          leftWins: doc.querySelector("#left-wins").value,
+          rightWins: doc.querySelector("#right-wins").value
+        });
+        saveState();
+        render();
+      });
+
+      elements.matchForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        state = addMatch(state, {
+          date: doc.querySelector("#match-date").value,
+          event: doc.querySelector("#match-event").value,
+          round: doc.querySelector("#match-round").value,
+          winner: doc.querySelector("#winner").value,
+          score: doc.querySelector("#match-score").value,
+          note: doc.querySelector("#match-note").value
+        });
+        saveState();
+        elements.matchForm.reset();
+        render();
+      });
+
+      doc.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-delete-match]");
+        if (!button) return;
+        state = deleteMatch(state, button.dataset.deleteMatch);
+        saveState();
+        render();
+      });
+
+      doc.querySelectorAll("[data-avatar-file]").forEach((input) => {
+        input.addEventListener("change", () => {
+          const file = input.files && input.files[0];
+          if (!file) return;
+          const target = doc.querySelector(input.dataset.avatarFile);
+          const reader = new FileReader();
+          reader.addEventListener("load", () => {
+            target.value = String(reader.result || "");
+          });
+          reader.readAsDataURL(file);
+        });
+      });
+
+      elements.openEditor.addEventListener("click", () => {
+        elements.operationZone.classList.add("is-open");
+        elements.operationZone.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      elements.closeEditor.addEventListener("click", () => {
+        elements.operationZone.classList.remove("is-open");
+      });
+
+      elements.syncConnect.addEventListener("click", async () => {
+        syncConfig = {
+          url: elements.syncUrl.value.trim(),
+          room: elements.syncRoom.value.trim() || "default"
+        };
+        saveSyncConfig(syncConfig);
+        if (!syncConfig.url) {
+          setSyncStatus("未启用云同步，当前只保存在本机浏览器。");
+          return;
+        }
+        await pullCloudState();
+      });
+
+      elements.syncPull.addEventListener("click", pullCloudState);
+
+      render();
+      if (syncConfig.url) {
+        setSyncStatus("已启用云同步。", "ok");
+        pullCloudState();
+      }
+    })();
+  </script>
+</body>
+</html>
