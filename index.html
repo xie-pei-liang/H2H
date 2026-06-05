@@ -920,6 +920,8 @@
         url: "https://h2h-badminton-default-rtdb.asia-southeast1.firebasedatabase.app",
         room: "H2H"
       };
+      const LEGACY_SYNC_URLS = ["firebaseio.com"];
+      const SYNC_POLL_INTERVAL_MS = 8000;
 
       function createDefaultState() {
         return {
@@ -1053,8 +1055,9 @@
       function loadSyncConfig() {
         try {
           const config = JSON.parse(localStorage.getItem(SYNC_KEY) || "{}");
+          const url = normalizeSyncUrl(config.url);
           return {
-            url: String(config.url || DEFAULT_SYNC_CONFIG.url),
+            url: url || DEFAULT_SYNC_CONFIG.url,
             room: String(config.room || DEFAULT_SYNC_CONFIG.room)
           };
         } catch {
@@ -1063,7 +1066,18 @@
       }
 
       function saveSyncConfig(config) {
-        localStorage.setItem(SYNC_KEY, JSON.stringify(config));
+        localStorage.setItem(SYNC_KEY, JSON.stringify({
+          url: normalizeSyncUrl(config.url) || DEFAULT_SYNC_CONFIG.url,
+          room: String(config.room || DEFAULT_SYNC_CONFIG.room)
+        }));
+      }
+
+      function normalizeSyncUrl(value) {
+        const url = String(value || "").trim().replace(/\/+$/, "");
+        if (!url || LEGACY_SYNC_URLS.some((legacy) => url.includes(legacy))) {
+          return DEFAULT_SYNC_CONFIG.url;
+        }
+        return url;
       }
 
       function buildSyncEndpoint(config) {
@@ -1135,10 +1149,10 @@
         }
       }
 
-      async function pullCloudState() {
+      async function pullCloudState(options = {}) {
         const endpoint = buildSyncEndpoint(syncConfig);
         if (!endpoint) {
-          setSyncStatus("请先填写同步地址。", "error");
+          if (!options.silent) setSyncStatus("请先填写同步地址。", "error");
           return;
         }
         try {
@@ -1149,13 +1163,13 @@
             state = sanitizeState(remoteState);
             localStorage.setItem(STORAGE_KEY, serializeState(state));
             render();
-            setSyncStatus("已从云端拉取最新数据。", "ok");
+            if (!options.silent) setSyncStatus("已从云端拉取最新数据。", "ok");
           } else {
             await pushCloudState();
-            setSyncStatus("云端为空，已上传当前数据。", "ok");
+            if (!options.silent) setSyncStatus("云端为空，已上传当前数据。", "ok");
           }
         } catch (error) {
-          setSyncStatus(`云端拉取失败：${error.message}`, "error");
+          if (!options.silent) setSyncStatus(`云端拉取失败：${error.message}`, "error");
         }
       }
 
@@ -1294,6 +1308,10 @@
       if (syncConfig.url) {
         setSyncStatus("已启用云同步。", "ok");
         pullCloudState();
+        setInterval(() => {
+          if (elements.operationZone.contains(doc.activeElement)) return;
+          pullCloudState({ silent: true });
+        }, SYNC_POLL_INTERVAL_MS);
       }
     })();
   </script>
